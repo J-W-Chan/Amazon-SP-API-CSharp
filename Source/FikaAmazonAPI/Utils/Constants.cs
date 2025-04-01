@@ -52,6 +52,7 @@ namespace FikaAmazonAPI.Utils
         public enum IncludedData
         {
             attributes,
+            classifications,
             dimensions,
             identifiers,
             images,
@@ -336,7 +337,8 @@ namespace FikaAmazonAPI.Utils
             JAN,
             MINSAN,
             SKU,
-            UPC
+            UPC,
+            FNSKU
         }
 
         [JsonConverter(typeof(StringEnumConverter))]
@@ -530,9 +532,9 @@ namespace FikaAmazonAPI.Utils
             GET_FBA_OVERAGE_FEE_CHARGES_DATA,
             GET_EPR_MONTHLY_REPORTS,
             GET_EPR_QUARTERLY_REPORTS,
-            GET_EPR_ANNUAL_REPORTS
-
-
+            GET_EPR_ANNUAL_REPORTS,
+            GET_BRAND_ANALYTICS_SEARCH_CATALOG_PERFORMANCE_REPORT,
+            GET_BRAND_ANALYTICS_SEARCH_QUERY_PERFORMANCE_REPORT
         }
         [JsonConverter(typeof(StringEnumConverter))]
         public enum ContentType
@@ -618,7 +620,9 @@ namespace FikaAmazonAPI.Utils
             Issues,
             Offers,
             FulfillmentAvailability,
-            Procurement
+            Procurement,
+            Relationships,
+            ProductTypes
         }
 
         [JsonConverter(typeof(StringEnumConverter))]

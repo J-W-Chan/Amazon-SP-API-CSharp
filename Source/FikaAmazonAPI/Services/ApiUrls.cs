@@ -657,6 +657,7 @@ namespace FikaAmazonAPI.AmazonSpApiSDK.Services
             public static string DeleteListingItem(string seller, string sku) => $"{_resourceBaseUrl}/items/{seller}/{Uri.EscapeDataString(sku)}";
 
             public static string PatchListingItem(string seller, string sku) => $"{_resourceBaseUrl}/items/{seller}/{Uri.EscapeDataString(sku)}";
+            public static string SearchListingsItems(string seller) => $"{_resourceBaseUrl}/items/{seller}";
         }
 
         protected class ListingsRestrictionsApi
@@ -670,6 +671,28 @@ namespace FikaAmazonAPI.AmazonSpApiSDK.Services
             private readonly static string _resourceBaseUrl = "/definitions/2020-09-01/productTypes";
             public static string GetDefinitionsProductType(string productType) => $"{_resourceBaseUrl}/{productType}";
             public static string SearchDefinitionsProductTypes => $"{_resourceBaseUrl}";
+        }
+
+        protected class AppIntegrationsApiUrls
+        {
+            private readonly static string _resourceBaseUrl = "appIntegrations";
+
+            #region V20240401
+            private readonly static string _resourceBaseUrl_V20240401 = "appIntegrations/2024-04-01";
+
+            public static string CreateNotification
+            {
+                get => $"{_resourceBaseUrl_V20240401}/notifications";
+            }
+
+            public static string DeleteNotifications
+            {
+                get => $"{_resourceBaseUrl_V20240401}/notifications/deletion";
+            }
+
+            public static string RecordActionFeedback(string notificationId) => $"{_resourceBaseUrl_V20240401}/notifications/{notificationId}/feedback";
+
+            #endregion
         }
 
     }

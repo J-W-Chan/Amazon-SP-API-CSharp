@@ -4,12 +4,12 @@ using FikaAmazonAPI.AmazonSpApiSDK.Models.Token;
 using FikaAmazonAPI.AmazonSpApiSDK.Services;
 using FikaAmazonAPI.Search;
 using FikaAmazonAPI.Utils;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RestSharp;
 using RestSharp.Serializers.NewtonsoftJson;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -42,13 +42,16 @@ namespace FikaAmazonAPI.Services
             }
         }
 
+        private ILogger<RequestService>? _logger = null;
+
         /// <summary>
         /// Creates request base service
         /// </summary>
-        /// <param name="awsCredentials">Contains api clients information</param>
-        /// <param name="clientToken">Contains current user's account api keys</param>
-        public RequestService(AmazonCredential amazonCredential)
+        /// <param name="amazonCredential">A credential containing the API user's information and cached token values</param>
+        /// <param name="loggerFactory">A singleton </param>
+        public RequestService(AmazonCredential amazonCredential, ILoggerFactory? loggerFactory)
         {
+            _logger = loggerFactory?.CreateLogger<RequestService>();
             AmazonCredential = amazonCredential;
             AmazonSandboxUrl = amazonCredential.MarketPlace.Region.SandboxHostUrl;
             AmazonProductionUrl = amazonCredential.MarketPlace.Region.HostUrl;
@@ -164,27 +167,31 @@ namespace FikaAmazonAPI.Services
                         name = parameter.Name,
                         value = parameter.Value,
                         type = parameter.Type.ToString()
-                    }),
+                    }).ToList(),
                     // ToString() here to have the method as a nice string otherwise it will just show the enum value
                     method = request.Method.ToString(),
                     // This will generate the actual Uri used in the request
                     //uri = request. _restClient.BuildUri(request),
                 };
 
+                //remove the access token from the headers
+                requestToLog.parameters.RemoveAll(p => p.name == "x-amz-access-token");
+
                 var responseToLog = new
                 {
                     statusCode = response.StatusCode,
                     content = response.Content,
-                    headers = response.Headers,
+                    headers = response.Headers.Select(h => new
+                    {
+                        name = h.Name,
+                        value = h.Value
+                    }),
                     // The Uri that actually responded (could be different from the requestUri if a redirection occurred)
                     responseUri = response.ResponseUri,
                     errorMessage = response.ErrorMessage,
                 };
-
-                Debug.WriteLine("\n\n---------------------------------------------------------\n");
-                string msg = string.Format("Request completed, \nRequest: {0} \n\nResponse: {1}", requestToLog, responseToLog);
-
-                Debug.WriteLine(msg);
+                //There are PII considerations here
+                _logger?.LogInformation("Request completed, \nRequest: {@request} \n\nResponse: {@response}", requestToLog, responseToLog);
             }
         }
 
@@ -220,7 +227,7 @@ namespace FikaAmazonAPI.Services
                     if (tryCount >= AmazonCredential.MaxThrottledRetryCount)
                     {
                         if (AmazonCredential.IsDebugMode)
-                            Console.WriteLine("Throttle max try count reached");
+                            _logger?.LogWarning("Throttle max try count reached");
 
                         throw;
                     }
@@ -234,7 +241,7 @@ namespace FikaAmazonAPI.Services
         }
 
         private async Task SleepForRateLimit(IReadOnlyCollection<RestSharp.Parameter> headers,
-            RateLimitType rateLimitType = RateLimitType.UNSET, CancellationToken cancellationToken = default)
+                   RateLimitType rateLimitType = RateLimitType.UNSET, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -284,8 +291,7 @@ namespace FikaAmazonAPI.Services
             else
             {
                 if (AmazonCredential.IsDebugMode)
-                    Console.WriteLine("Amazon Api didn't respond with Okay, see exception for more details" +
-                                      response.Content);
+                    _logger?.LogWarning("Amazon Api didn't respond with Okay, see exception for more details: {content}", response.Content);
 
                 var errorResponse = response.Content.ConvertToErrorResponse();
                 if (errorResponse != null)

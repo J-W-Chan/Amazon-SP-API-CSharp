@@ -4,6 +4,7 @@ using FikaAmazonAPI.AmazonSpApiSDK.Models.Notifications;
 using FikaAmazonAPI.NotificationMessages;
 using FikaAmazonAPI.Parameter.Notification;
 using FikaAmazonAPI.Utils;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,7 @@ namespace FikaAmazonAPI.Services
 {
     public class NotificationService : RequestService
     {
-        public NotificationService(AmazonCredential amazonCredential) : base(amazonCredential)
+        public NotificationService(AmazonCredential amazonCredential, ILoggerFactory? loggerFactory) : base(amazonCredential, loggerFactory)
         {
 
         }
